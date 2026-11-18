@@ -1,0 +1,42 @@
+name: Materialize Paper Figures
+
+on:
+  push:
+    branches:
+      - cleanup/research-release-2026-11-18
+    paths:
+      - .github/workflows/materialize-figures.yml
+
+permissions:
+  contents: write
+
+jobs:
+  decode:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode embedded images
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import base64
+          import re
+
+          for source in sorted(Path('assets').glob('*.svg')):
+              text = source.read_text(encoding='utf-8')
+              match = re.search(r'href="data:image/webp;base64,([A-Za-z0-9+/=]+)"', text)
+              if not match:
+                  raise RuntimeError(f'Invalid paper image: {source}')
+              output = source.with_suffix('.webp')
+              output.write_bytes(base64.b64decode(match.group(1), validate=True))
+              print(f'{output}: {output.stat().st_size} bytes')
+          PY
+      - name: Commit images
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/*.webp
+          if ! git diff --cached --quiet; then
+            git commit -m 'Add raster paper figures'
+            git push
+          fi
