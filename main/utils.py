@@ -261,27 +261,47 @@ def estimate_epsilon(
     max_steps: int = 52,
     seed: int = 0,
 ) -> float:
-    vecs = SobolEngine(get_suite_dim(bench), scramble=True, seed=seed).draw(n_samples).numpy()
+    from tempfile import TemporaryDirectory
+    from pathlib import Path
 
+    if n_samples < 2:
+        raise ValueError("At least two configurations are needed")
+
+    vecs = SobolEngine(
+        get_suite_dim(bench), scramble=True, seed=seed
+    ).draw(n_samples).numpy()
     vals = np.empty(n_samples, dtype=np.float32)
     for i, vec in enumerate(vecs):
-        vals[i] = get_acc(vec, task_id=task_id, fidelity_step=exploration, bench=bench, max_steps=max_steps)
+        vals[i] = get_acc(
+            vec, task_id=task_id, fidelity_step=exploration,
+            bench=bench, max_steps=max_steps,
+        )
 
-    diff = vecs[:, None, :] - vecs[None, :, :]
-    dist_mat = np.linalg.norm(diff, axis=2)
+    n_pairs = n_samples * (n_samples - 1) // 2
+    with TemporaryDirectory(prefix="adacent-epsilon-") as tmpdir:
+        samples = np.memmap(
+            Path(tmpdir) / "pairs.dat", dtype=np.float32,
+            mode="w+", shape=(n_pairs,),
+        )
+        used = 0
+        for i in range(n_samples - 1):
+            distances = np.linalg.norm(vecs[i + 1:] - vecs[i], axis=1)
+            other = vals[i + 1:]
+            greater = np.maximum(vals[i], other)
+            lesser = np.minimum(vals[i], other)
+            valid = (distances > 0) & (greater > 0)
+            eps = np.empty_like(distances)
+            eps.fill(np.nan)
+            eps[valid] = (1 - lesser[valid] / greater[valid]) / distances[valid]
+            eps = eps[np.isfinite(eps) & (eps > 0)]
+            count = eps.size
+            samples[used:used + count] = eps
+            used += count
 
-    i_idx, j_idx = np.triu_indices(n_samples, k=1)
-    v_i = vals[i_idx]
-    v_j = vals[j_idx]
-    v_g = np.maximum(v_i, v_j)
-    v_f = np.minimum(v_i, v_j)
-    d = dist_mat[i_idx, j_idx]
-
-    mask = (d > 0) & (v_g > 0)
-    eps_samples = (1 - v_f[mask] / v_g[mask]) / d[mask]
-
-    eps_arr = eps_samples[np.isfinite(eps_samples) & (eps_samples > 0)]
-    if eps_arr.size == 0:
-        raise ValueError("No valid pairs to estimate epsilon.")
-
-    return float(np.percentile(eps_arr, 95))
+        if not used:
+            del samples
+            raise ValueError("No valid pairs to estimate epsilon.")
+        percentile = float(np.percentile(samples[:used], 95, overwrite_input=True))
+        samples.flush()
+        del samples
+        return percentile

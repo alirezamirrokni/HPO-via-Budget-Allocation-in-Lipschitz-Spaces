@@ -1,0 +1,30 @@
+{
+  "suite": "lcbench",
+  "max_epoch": 52,
+  "budget": 1040,
+  "hb_budget": 589,
+  "epsilon_samples": 10000,
+  "algorithms": {
+    "Random Search": {
+      "trials": 20
+    },
+    "Hyperband": {
+      "iters": 6
+    },
+    "BOHB": {
+      "iters": 6
+    },
+    "SMAC": {
+      "trials": 24
+    },
+    "AdaCent": {
+      "k": 25
+    },
+    "EnhancedAdaCent": {
+      "k": 25
+    },
+    "EnhancedFullCent": {
+      "k": 20
+    }
+  }
+}

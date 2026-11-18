@@ -40,8 +40,11 @@ class EnhancedAdaCent:
             return int(self.rng.choice(remaining_idx))
 
         base = dist_mat[np.ix_(remaining_idx, selected_idx)]
-        scales = best_perf / perf[selected_idx]
-        adjusted = base * scales - (1.0 / self.epsilon) * (scales - 1.0)
+        values = perf[selected_idx]
+        positive = values > 0
+        scales = max(best_perf, 1e-8) / np.maximum(values, 1e-8)
+        modified = base * scales - (scales - 1.0) / max(self.epsilon, 1e-8)
+        adjusted = np.where(positive[None, :], np.minimum(base, modified), base)
         scores = adjusted.min(axis=1)
         return int(remaining_idx[np.argmax(scores)])
 
