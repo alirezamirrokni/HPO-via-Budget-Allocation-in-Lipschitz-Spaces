@@ -5,7 +5,7 @@ from typing import List, Tuple
 import numpy as np
 from torch.quasirandom import SobolEngine
 
-from .utils import get_acc, get_suite_dim
+from ..benchmark import get_acc, get_suite_dim
 
 
 class FullCent:

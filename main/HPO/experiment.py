@@ -9,12 +9,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from yahpo_gym import benchmark_set
 
-from . import other_algorithms
-from .AdaCent import AdaCent
-from .EnhancedAdaCent import EnhancedAdaCent
-from .EnhancedFullCent import EnhancedFullCent
-from .FullCent import FullCent
-from .utils import estimate_epsilon, track_objective_function
+from .benchmark import estimate_epsilon, track_objective_function
+from .methods import baselines
+from .methods.adacent import AdaCent
+from .methods.enhanced_adacent import EnhancedAdaCent
+from .methods.enhanced_fullcent import EnhancedFullCent
+from .methods.fullcent import FullCent
 
 logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
 
@@ -29,10 +29,10 @@ CENTER_METHODS = {
 ENHANCED_METHODS = {"EnhancedAdaCent", "EnhancedFullCent"}
 
 BASELINES = {
-    "Random Search": (other_algorithms.random_search, "trials", "n_trials"),
-    "Hyperband": (other_algorithms.hyperband, "iters", "n_iterations"),
-    "BOHB": (other_algorithms.bohb_search, "iters", "n_iterations"),
-    "SMAC": (other_algorithms.smac_search, "trials", "n_trials"),
+    "Random Search": (baselines.random_search, "trials", "n_trials"),
+    "Hyperband": (baselines.hyperband, "iters", "n_iterations"),
+    "BOHB": (baselines.bohb_search, "iters", "n_iterations"),
+    "SMAC": (baselines.smac_search, "trials", "n_trials"),
 }
 
 

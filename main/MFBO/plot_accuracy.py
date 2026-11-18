@@ -8,6 +8,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+from .paths import OUTPUT_DIR
+
 DEFAULT_METHODS = ["EnhancedAdaCent", "AdaCent", "RMFBO", "MES", "KG", "RAND"]
 DISPLAY_NAMES = {
     "KG": "KG",
@@ -42,7 +44,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--records-dir",
         type=Path,
-        default=Path("res/records"),
+        default=OUTPUT_DIR / "records",
         help="Directory containing numeric result .npy files.",
     )
     parser.add_argument(
@@ -68,7 +70,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Output image path. Defaults to "
-            "res/figures/<problem>_final_accuracy_se_bar.png."
+            "outputs/mfbo/figures/<problem>_final_accuracy_se_bar.png."
         ),
     )
     parser.add_argument("--dpi", type=int, default=300)
@@ -282,7 +284,7 @@ def main() -> None:
     fig.tight_layout()
 
     output = args.output or (
-        Path("res/figures") / f"{args.problem}_final_accuracy_se_bar.png"
+        OUTPUT_DIR / "figures" / f"{args.problem}_final_accuracy_se_bar.png"
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, dpi=args.dpi, bbox_inches="tight")

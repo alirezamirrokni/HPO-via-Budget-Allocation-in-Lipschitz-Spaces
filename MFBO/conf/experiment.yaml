@@ -1,9 +1,0 @@
-defaults:
-  - problem: iaml_xgboost
-
-  - algorithm: rmfbo_pseudo
-
-checkpoint:
-  enabled: true
-  reset: false
-  directory: res/checkpoints

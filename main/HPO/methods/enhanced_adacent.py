@@ -3,8 +3,8 @@ from typing import List, Tuple
 import numpy as np
 from torch.quasirandom import SobolEngine
 
-from .AdaCent import _linear_tail
-from .utils import get_acc, get_suite_dim
+from .adacent import _linear_tail
+from ..benchmark import get_acc, get_suite_dim
 
 
 class EnhancedAdaCent:

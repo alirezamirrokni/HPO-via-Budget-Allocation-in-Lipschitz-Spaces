@@ -4,8 +4,8 @@ import argparse
 import json
 from pathlib import Path
 
-from .src.experiment import run_selected_algorithms
-from .src.utils import get_all_task_ids
+from .experiment import run_selected_algorithms
+from .benchmark import get_all_task_ids
 
 
 def main() -> None:

@@ -252,7 +252,7 @@ def smac_search(
     except ModuleNotFoundError as exc:
         if exc.name == "smac":
             raise RuntimeError(
-                "Install HPO/requirements-smac.txt to run SMAC."
+                "Install main/HPO/requirements-smac.txt to run SMAC."
             ) from exc
         raise
 

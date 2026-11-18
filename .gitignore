@@ -17,8 +17,6 @@ outputs/
 results/
 comparison_results/
 MFBO/res/
-MFBO/outputs/
-MFBO/.hydra/
 multirun/
 *.npy
 *.npz
@@ -34,5 +32,4 @@ Thumbs.db
 
 # Local YAHPO data and configuration
 /data/
-/MFBO/data/
 /.yahpo-gym.yml

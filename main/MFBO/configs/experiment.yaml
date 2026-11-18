@@ -1,0 +1,14 @@
+defaults:
+  - problem: iaml_xgboost
+  - algorithm: rmfbo_pseudo
+
+checkpoint:
+  enabled: true
+  reset: false
+  directory: outputs/mfbo/checkpoints
+
+hydra:
+  run:
+    dir: outputs/mfbo/runs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: outputs/mfbo/multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}

@@ -14,8 +14,10 @@ from botorch import fit_gpytorch_mll
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.models.cost import AffineFidelityCostModel
 from omegaconf import DictConfig, OmegaConf
-from src.adacent_baselines import run_adacent, run_enhanced_adacent
-from src.checkpointing import (
+from tqdm import tqdm
+
+from .benchmark import LCBench, iaml_rpart, iaml_xgboost
+from .checkpointing import (
     CHECKPOINT_VERSION,
     atomic_save_checkpoint,
     capture_rng_state,
@@ -26,17 +28,11 @@ from src.checkpointing import (
     restore_rng_state,
     serialize_run_state,
 )
-from src.model import init_model_srdk
-from src.opt import bo_step_kg, bo_step_mes, rmfbo, rmfbo_pseudo, rmfbo_random
-from src.test_functions import (
-    LCBench,
-    iaml_rpart,
-    iaml_xgboost,
-)
-from src.utility import generate_initial_data, get_project, initialize_mf_model
-from tqdm import tqdm
-
-PROJECT_ROOT = Path(__file__).resolve().parent
+from .methods.adacent_baselines import run_adacent, run_enhanced_adacent
+from .methods.model import init_model_srdk
+from .methods.opt import bo_step_kg, bo_step_mes, rmfbo, rmfbo_pseudo, rmfbo_random
+from .methods.utility import generate_initial_data, get_project, initialize_mf_model
+from .paths import OUTPUT_DIR, REPO_ROOT
 
 tkwargs = {
     "dtype": torch.double,
@@ -244,13 +240,13 @@ def _build_file_name(config: DictConfig, dk: bool) -> str:
 
 def _checkpoint_options(config: DictConfig) -> tuple[bool, bool, str]:
     if not hasattr(config, "checkpoint"):
-        return True, False, "res/checkpoints"
+        return True, False, "outputs/mfbo/checkpoints"
     enabled = bool(config.checkpoint.enabled) if hasattr(config.checkpoint, "enabled") else True
     reset = bool(config.checkpoint.reset) if hasattr(config.checkpoint, "reset") else False
     directory = (
         str(config.checkpoint.directory)
         if hasattr(config.checkpoint, "directory")
-        else "res/checkpoints"
+        else "outputs/mfbo/checkpoints"
     )
     return enabled, reset, directory
 
@@ -294,7 +290,7 @@ def _run_single_setting(
     signature = config_signature(config)
     checkpoint_enabled, reset_checkpoint, checkpoint_directory = _checkpoint_options(config)
     checkpoint_path = make_checkpoint_path(
-        PROJECT_ROOT,
+        REPO_ROOT,
         file_name,
         config,
         directory=checkpoint_directory,
@@ -674,7 +670,7 @@ def _maybe_plot_results(
     if train_x is None or maximum_reward is None or cumulative_cost is None:
         return
 
-    output_dir = PROJECT_ROOT / "res" / "figures"
+    output_dir = OUTPUT_DIR / "figures"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     plt.figure(figsize=(12, 6))
@@ -699,7 +695,7 @@ def _maybe_plot_results(
     plt.close()
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="experiment")
+@hydra.main(version_base=None, config_path="configs", config_name="experiment")
 def experiment(config: DictConfig):
     problem = _build_problem(config)
 
@@ -801,7 +797,7 @@ def experiment(config: DictConfig):
     hydra_dir.mkdir(parents=True, exist_ok=True)
     np.save(hydra_dir / f"{file_name}.npy", record)
 
-    records_dir = PROJECT_ROOT / "res" / "records"
+    records_dir = OUTPUT_DIR / "records"
     records_dir.mkdir(parents=True, exist_ok=True)
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     save_path = records_dir / f"{file_name}_{now}.npy"
