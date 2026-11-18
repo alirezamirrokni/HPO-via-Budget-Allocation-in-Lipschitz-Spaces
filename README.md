@@ -1,10 +1,8 @@
 # Hyperparameter Optimization via Budget Allocation in Lipschitz Spaces
 
-Code for the [paper](https://arxiv.org/pdf/2510.10605) by MohammadHossein Bateni, Hossein Esfandiari, Samira HosseinGhorban, Alireza Mirrokni, and Radin Shahdaei.
+Code for the paper [**Hyperparameter Optimization via Budget Allocation in Lipschitz Spaces**](https://arxiv.org/pdf/2510.10605) (KDD 2027).
 
-A hyperparameter configuration reveals its learning curve only as it receives training resources. We formulate the problem of sharing a fixed budget across configurations as **Unknown Value Probing (UVP)**. Nearby configurations have similar performance curves, so an evaluation can inform which parts of the search space to explore next.
-
-**AdaCent** combines greedy k-center coverage with adaptive pruning. **Enhanced-AdaCent** also uses early performance to adjust distances, reducing the priority of regions around low-value centers. The paper gives approximation guarantees and evaluates these methods on more than 250 YAHPO Gym tasks.
+Hyperparameter optimization and model selection often require allocating a limited evaluation budget across many candidate configurations, where performance improves with additional training or resources. We study this setting when each configuration has an unknown performance curve over budget. Similarity between configurations induces similarity between their curves, capturing geometric structure in the search space. We formalize the resulting decision problem as Unknown Value Probing and propose budget allocation strategies that combine principled exploration of the configuration space with value-informed concentration on regions supported by observed evidence. We prove worst-case approximation guarantees for our approach and show these guarantees are near-optimal by matching corresponding hardness barriers. Extensive experiments on large benchmark suites spanning more than 250 experimental settings demonstrate consistent gains over strong baselines in both anytime behavior and final incumbent performance.
 
 <p align="center"><img src="assets/overview.webp" width="95%" alt="Five stages of greedy k-center selection under Euclidean distance and enhanced distance"></p>
 <p align="center"><em>Figure 1. Enhanced distance expands the coverage of lower-value centers, changing which region the algorithm explores next.</em></p>
