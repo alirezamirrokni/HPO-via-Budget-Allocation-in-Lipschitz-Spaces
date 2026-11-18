@@ -189,6 +189,7 @@ def run_selected_algorithms(
     horizon: int,
     hb_budget: int,
     outdir: Path,
+    epsilon_samples: int = 10_000,
 ):
     outdir.mkdir(parents=True, exist_ok=True)
     plots_dir = outdir / "plots"
@@ -211,7 +212,7 @@ def run_selected_algorithms(
         bench = benchmark_set.BenchmarkSet(suite_name, instance=task, multithread=False)
 
         print(f"→ Running task {task} ({task_idx}/{len(task_ids)})")
-        eps = estimate_epsilon(bench, task, 10_000, int(0.1 * max_epoch), max_epoch)
+        eps = estimate_epsilon(bench, task, epsilon_samples, int(0.1 * max_epoch), max_epoch)
         print(f"  estimated epsilon: {eps:.6f}")
 
         all_results: List[Dict[str, Tuple[np.ndarray, int]]] = []
