@@ -10,13 +10,10 @@ import hydra
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from omegaconf import DictConfig, OmegaConf
-from tqdm import tqdm
-
 from botorch import fit_gpytorch_mll
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.models.cost import AffineFidelityCostModel
-
+from omegaconf import DictConfig, OmegaConf
 from src.adacent_baselines import run_adacent, run_enhanced_adacent
 from src.checkpointing import (
     CHECKPOINT_VERSION,
@@ -37,7 +34,7 @@ from src.test_functions import (
     iaml_xgboost,
 )
 from src.utility import generate_initial_data, get_project, initialize_mf_model
-
+from tqdm import tqdm
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 

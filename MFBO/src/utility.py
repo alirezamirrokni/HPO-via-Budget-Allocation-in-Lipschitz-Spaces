@@ -1,30 +1,27 @@
-from tqdm import tqdm
+import warnings
 from math import log
 
+import gpytorch
 import numpy as np
 import torch
 import torch.nn.functional as F
+from botorch.acquisition.utils import project_to_target_fidelity
+from botorch.fit import fit_gpytorch_mll
+from botorch.models import SingleTaskGP
+from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
+from botorch.models.transforms.outcome import Standardize
+from botorch.optim import optimize_acqf
+from botorch.utils.transforms import unnormalize
+from gpytorch.constraints import Interval
+from gpytorch.kernels import MaternKernel, ScaleKernel
+from gpytorch.likelihoods import GaussianLikelihood
+from gpytorch.mlls import ExactMarginalLogLikelihood
 from torch import Tensor
 from torch.autograd import grad
-from torch.quasirandom import SobolEngine
+from tqdm import tqdm
 
-from botorch.optim import optimize_acqf
-from botorch.models.transforms.outcome import Standardize
-from botorch.utils.transforms import unnormalize
-from botorch.models import SingleTaskGP
-from botorch.fit import fit_gpytorch_mll
-from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
-from botorch.acquisition.utils import project_to_target_fidelity
+from .acquisition import qConfidenceInterval
 
-import gpytorch
-from gpytorch.likelihoods import GaussianLikelihood
-from gpytorch.kernels import MaternKernel, ScaleKernel
-from gpytorch.mlls import ExactMarginalLogLikelihood
-from gpytorch.constraints import Interval
-
-import warnings
-
-from .acquisition import *
 warnings.filterwarnings("ignore")
 
 

@@ -16,8 +16,6 @@ htmlcov/
 outputs/
 results/
 comparison_results/
-custom_plots_*/
-smac_hpo_tmp_*/
 MFBO/res/
 MFBO/outputs/
 MFBO/.hydra/
@@ -33,3 +31,8 @@ multirun/
 Thumbs.db
 .vscode/
 .idea/
+
+# Local YAHPO data and configuration
+/data/
+/MFBO/data/
+/.yahpo-gym.yml

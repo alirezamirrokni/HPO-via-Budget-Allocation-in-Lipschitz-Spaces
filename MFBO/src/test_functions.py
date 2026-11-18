@@ -46,12 +46,8 @@ class LCBench(YahooGYM):
     ]
 
     def __init__(self, negate: Optional[bool] = False, instance: str = "3945") -> None:
-        from yahpo_gym import benchmark_set, local_config
+        from yahpo_gym import benchmark_set
 
-        local_config.init_config()
-        local_config.set_data_path("./data/yahpo_data")
-
-        self.local_config = local_config
         self.bench = benchmark_set.BenchmarkSet("lcbench")
         self.input_keys = [
             "batch_size",
@@ -94,12 +90,8 @@ class iaml_rpart(YahooGYM):
     _bounds = [(0.001, 1.0), (1, 30), (1, 100), (1, 100), (0.03, 1.0)]
 
     def __init__(self, negate: Optional[bool] = False, instance: str = "1489") -> None:
-        from yahpo_gym import benchmark_set, local_config
+        from yahpo_gym import benchmark_set
 
-        local_config.init_config()
-        local_config.set_data_path("./data/yahpo_data")
-
-        self.local_config = local_config
         self.bench = benchmark_set.BenchmarkSet("iaml_rpart")
         self.input_keys = ["cp", "maxdepth", "minbucket", "minsplit", "trainsize"]
         self.int_keys = ["maxdepth", "minbucket", "minsplit"]
@@ -152,12 +144,8 @@ class iaml_xgboost(YahooGYM):
         instance: str = "1489",
         booster: str = "dart",
     ) -> None:
-        from yahpo_gym import benchmark_set, local_config
+        from yahpo_gym import benchmark_set
 
-        local_config.init_config()
-        local_config.set_data_path("./data/yahpo_data")
-
-        self.local_config = local_config
         self.bench = benchmark_set.BenchmarkSet("iaml_xgboost")
         self.booster = booster
         self.input_keys = [

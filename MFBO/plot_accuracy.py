@@ -8,7 +8,6 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 DEFAULT_METHODS = ["EnhancedAdaCent", "AdaCent", "RMFBO", "MES", "KG", "RAND"]
 DISPLAY_NAMES = {
     "KG": "KG",
@@ -31,7 +30,7 @@ COLORS = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Plot the final mean accuracy of each method as bars with "
+            "Plot the final mean objective of each method as bars with "
             "standard-error error bars."
         )
     )
@@ -254,7 +253,10 @@ def main() -> None:
 
     ax.set_xticks(x, labels)
     ax.set_xlabel("Method")
-    ax.set_ylabel("Accuracy (%)" if use_percent else "Objective value")
+    metric = {"LCBench": "Validation accuracy", "RPart": "AUC", "XGBoost": "AUC"}.get(
+        args.problem, "Objective value"
+    )
+    ax.set_ylabel(f"{metric} (%)" if use_percent else metric)
     ax.set_title(args.title or args.problem, pad=14)
     ax.grid(axis="y", linewidth=1.1, alpha=0.65, zorder=0)
     ax.set_axisbelow(True)

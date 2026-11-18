@@ -18,9 +18,11 @@ class FullCent:
         self.last_num_used_configs = 0
 
     def run(self, bench, task_id: str) -> List[Tuple[int, float]]:
-        vecs = SobolEngine(
-            dimension=get_suite_dim(bench), scramble=True, seed=self.seed
-        ).draw(self.n).numpy()
+        vecs = (
+            SobolEngine(dimension=get_suite_dim(bench), scramble=True, seed=self.seed)
+            .draw(self.n)
+            .numpy()
+        )
         available = np.ones(self.n, dtype=bool)
         nearest = np.full(self.n, np.inf, dtype=float)
         rng = np.random.default_rng(self.seed)

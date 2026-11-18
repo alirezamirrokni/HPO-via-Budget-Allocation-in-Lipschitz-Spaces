@@ -5,6 +5,7 @@ import tqdm
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms.outcome import Standardize
 
+
 class twoBranchMFModel(torch.nn.Module):
 
     def __init__(self, data_dim:int=1, hidden_dim:int=128):
@@ -42,7 +43,7 @@ class twoBranchMFModel(torch.nn.Module):
 class MFGPRegressionModel(SingleTaskGP):
         def __init__(self, train_x, train_y, likelihood, trained_branch_mlp:torch.nn.Module=None):
             super(MFGPRegressionModel, self).__init__(train_x, train_y, likelihood)
-            twoBranchMFModel = twoBranchMFModel(train_x.size(-1)) if trained_branch_mlp is None else trained_branch_mlp
+            branch_model = twoBranchMFModel(train_x.size(-1)) if trained_branch_mlp is None else trained_branch_mlp
             class MFFeastureExtractor(torch.nn.Module):
                 def __init__(self, model):
                     super(MFFeastureExtractor, self).__init__()
@@ -55,7 +56,7 @@ class MFGPRegressionModel(SingleTaskGP):
                     z = z1 + z2
                     return z
 
-            self.feature_extractor = MFFeastureExtractor(model=twoBranchMFModel)
+            self.feature_extractor = MFFeastureExtractor(model=branch_model)
             self.mean_module = gpytorch.means.ConstantMean()
             self.covar_module = gpytorch.kernels.ScaleKernel(
                 gpytorch.kernels.RBFKernel(ard_num_dims=2)

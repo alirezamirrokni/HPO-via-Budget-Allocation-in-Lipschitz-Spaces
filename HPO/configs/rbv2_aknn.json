@@ -1,8 +1,7 @@
 {
-  "suite": "rbv2_rpart",
+  "suite": "rbv2_aknn",
   "max_epoch": 52,
   "budget": 1040,
-  "hb_budget": 589,
   "epsilon_samples": 10000,
   "algorithms": {
     "Random Search": {
@@ -21,10 +20,22 @@
       "k": 25
     },
     "EnhancedAdaCent": {
-      "k": 25
+      "k": 25,
+      "exploration": 0.1
     },
     "EnhancedFullCent": {
       "k": 20
+    },
+    "FullCent": {
+      "k": 20
     }
-  }
+  },
+  "methods": [
+    "AdaCent",
+    "EnhancedAdaCent",
+    "Random Search",
+    "Hyperband",
+    "BOHB",
+    "SMAC"
+  ]
 }

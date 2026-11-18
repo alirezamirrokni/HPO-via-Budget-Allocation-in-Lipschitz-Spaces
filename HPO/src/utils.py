@@ -1,11 +1,10 @@
-
 import contextlib
-import json
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import numpy as np
 from torch.quasirandom import SobolEngine
 from yahpo_gym import BenchmarkSet
-
 
 SUITE_DIMS = {
     "lcbench": 7,
@@ -26,7 +25,9 @@ def infer_suite_name(bench) -> str:
     for suite_name in SUITE_DIMS:
         if suite_name in str(config_id):
             return suite_name
-    raise ValueError(f"Could not infer suite name from benchmark config id: {config_id}")
+    raise ValueError(
+        f"Could not infer suite name from benchmark config id: {config_id}"
+    )
 
 
 def get_suite_dim(bench) -> int:
@@ -38,47 +39,8 @@ def get_fidelity_key(bench) -> str:
 
 
 def get_all_task_ids(suite_name: str) -> list[str]:
-    bench = BenchmarkSet(suite_name, multithread=False)
-
-    for attr in ["instances", "instance_names", "available_instances"]:
-        val = getattr(bench, attr, None)
-        if val is not None:
-            try:
-                task_ids = [str(v) for v in list(val)]
-                if task_ids:
-                    return sorted(task_ids, key=lambda x: (len(x), x))
-            except Exception:
-                pass
-
-    cs = getattr(bench, "config_space", None)
-    if cs is not None:
-        for hp_name in ["OpenML_task_id", "task_id"]:
-            try:
-                hp = cs.get_hyperparameter(hp_name)
-                choices = getattr(hp, "choices", None)
-                if choices is not None and len(choices) > 0:
-                    task_ids = [str(v) for v in list(choices)]
-                    return sorted(task_ids, key=lambda x: (len(x), x))
-            except Exception:
-                pass
-
-    get_opt_space = getattr(bench, "get_opt_space", None)
-    if callable(get_opt_space):
-        try:
-            cs = get_opt_space()
-            for hp_name in ["OpenML_task_id", "task_id"]:
-                try:
-                    hp = cs.get_hyperparameter(hp_name)
-                    choices = getattr(hp, "choices", None)
-                    if choices is not None and len(choices) > 0:
-                        task_ids = [str(v) for v in list(choices)]
-                        return sorted(task_ids, key=lambda x: (len(x), x))
-                except Exception:
-                    pass
-        except Exception:
-            pass
-
-    raise RuntimeError(f"Could not discover task IDs for suite '{suite_name}'.")
+    bench = BenchmarkSet(suite_name, active_session=False)
+    return sorted(map(str, bench.instances), key=lambda task: (len(task), task))
 
 
 def _normalize_for_hash(value):
@@ -138,7 +100,7 @@ def track_objective_function(bench):
         bench.objective_function = original
 
 
-def vector_to_config(x: np.ndarray, task_id: str, epoch: int) -> dict:
+def lcbench_config(x: np.ndarray, task_id: str, epoch: int) -> dict:
     x0 = np.clip(x[0], 0.0, 1.0)
     low = np.float64(0.00010000000000000009)
     high = np.float64(0.10000000000000002)
@@ -150,20 +112,26 @@ def vector_to_config(x: np.ndarray, task_id: str, epoch: int) -> dict:
         "epoch": int(epoch),
         "learning_rate": lr,
         "max_dropout": float(x[1]),
-        "max_units": int(round(2 ** (np.log2(64) + x[2] * (np.log2(1024) - np.log2(64))))),
+        "max_units": int(
+            round(2 ** (np.log2(64) + x[2] * (np.log2(1024) - np.log2(64))))
+        ),
         "momentum": float(0.1 + x[3] * (0.99 - 0.1)),
         "num_layers": int(round(1 + x[4] * 4)),
-        "weight_decay": float(10 ** (np.log10(1e-5) + x[5] * (np.log10(1e-1) - np.log10(1e-5)))),
-        "batch_size": int(round(2 ** (np.log2(16) + x[6] * (np.log2(512) - np.log2(16)))))
+        "weight_decay": float(
+            10 ** (np.log10(1e-5) + x[5] * (np.log10(1e-1) - np.log10(1e-5)))
+        ),
+        "batch_size": int(
+            round(2 ** (np.log2(16) + x[6] * (np.log2(512) - np.log2(16))))
+        ),
     }
 
 
 def get_val_accuracy(x: np.ndarray, task_id: str, epoch: int, bench) -> float:
-    res = bench.objective_function(vector_to_config(x, task_id, epoch))
+    res = bench.objective_function(lcbench_config(x, task_id, epoch))
     return res[0]["val_accuracy"]
 
 
-def vector_to_config_(x: np.ndarray, task_id: str, trainsize: float, impute: str) -> dict:
+def aknn_config(x: np.ndarray, task_id: str, trainsize: float, impute: str) -> dict:
     M = int(round(18 + x[0] * (50 - 18)))
     M = int(np.clip(M, 18, 50))
 
@@ -172,11 +140,15 @@ def vector_to_config_(x: np.ndarray, task_id: str, trainsize: float, impute: str
     distance = dist_choices[idx]
 
     ef_low, ef_high = 8, 256
-    ef = int(round(10 ** (np.log10(ef_low) + x[2] * (np.log10(ef_high) - np.log10(ef_low)))))
+    ef = int(
+        round(10 ** (np.log10(ef_low) + x[2] * (np.log10(ef_high) - np.log10(ef_low))))
+    )
     ef = int(np.clip(ef, ef_low, ef_high))
 
     ec_low, ec_high = 8, 512
-    ef_construction = int(round(10 ** (np.log10(ec_low) + x[3] * (np.log10(ec_high) - np.log10(ec_low)))))
+    ef_construction = int(
+        round(10 ** (np.log10(ec_low) + x[3] * (np.log10(ec_high) - np.log10(ec_low))))
+    )
     ef_construction = int(np.clip(ef_construction, ec_low, ec_high))
 
     k = int(round(1 + x[4] * (50 - 1)))
@@ -198,12 +170,9 @@ def vector_to_config_(x: np.ndarray, task_id: str, trainsize: float, impute: str
     }
 
 
-def vector_to_config__(x: np.ndarray, task_id: str, trainsize: float, impute: str) -> dict:
+def rpart_config(x: np.ndarray, task_id: str, trainsize: float, impute: str) -> dict:
     cp_low, cp_high = 0.0009118819655545162, 1.0
-    cp = 10 ** (
-        np.log10(cp_low)
-        + x[0] * (np.log10(cp_high) - np.log10(cp_low))
-    )
+    cp = 10 ** (np.log10(cp_low) + x[0] * (np.log10(cp_high) - np.log10(cp_low)))
     cp = float(np.clip(cp, cp_low, cp_high))
 
     md_low, md_high = 1, 30
@@ -234,7 +203,9 @@ def vector_to_config__(x: np.ndarray, task_id: str, trainsize: float, impute: st
     }
 
 
-def get_acc(x: np.ndarray, task_id: str, fidelity_step: int, bench, max_steps: int = 52) -> float:
+def get_acc(
+    x: np.ndarray, task_id: str, fidelity_step: int, bench, max_steps: int = 52
+) -> float:
     suite_name = infer_suite_name(bench)
 
     if suite_name == "lcbench":
@@ -243,9 +214,9 @@ def get_acc(x: np.ndarray, task_id: str, fidelity_step: int, bench, max_steps: i
     trainsize = 0.03 + float(fidelity_step / max_steps) * 0.97
 
     if suite_name == "rbv2_aknn":
-        config = vector_to_config_(x, task_id, trainsize, impute="impute.mean")
+        config = aknn_config(x, task_id, trainsize, impute="impute.mean")
     elif suite_name == "rbv2_rpart":
-        config = vector_to_config__(x, task_id, trainsize, impute="impute.mean")
+        config = rpart_config(x, task_id, trainsize, impute="impute.mean")
     else:
         raise ValueError(f"Unknown suite name: {suite_name}")
 
@@ -261,32 +232,36 @@ def estimate_epsilon(
     max_steps: int = 52,
     seed: int = 0,
 ) -> float:
-    from tempfile import TemporaryDirectory
-    from pathlib import Path
-
     if n_samples < 2:
         raise ValueError("At least two configurations are needed")
 
-    vecs = SobolEngine(
-        get_suite_dim(bench), scramble=True, seed=seed
-    ).draw(n_samples).numpy()
+    vecs = (
+        SobolEngine(get_suite_dim(bench), scramble=True, seed=seed)
+        .draw(n_samples)
+        .numpy()
+    )
     vals = np.empty(n_samples, dtype=np.float32)
     for i, vec in enumerate(vecs):
         vals[i] = get_acc(
-            vec, task_id=task_id, fidelity_step=exploration,
-            bench=bench, max_steps=max_steps,
+            vec,
+            task_id=task_id,
+            fidelity_step=exploration,
+            bench=bench,
+            max_steps=max_steps,
         )
 
     n_pairs = n_samples * (n_samples - 1) // 2
     with TemporaryDirectory(prefix="adacent-epsilon-") as tmpdir:
         samples = np.memmap(
-            Path(tmpdir) / "pairs.dat", dtype=np.float32,
-            mode="w+", shape=(n_pairs,),
+            Path(tmpdir) / "pairs.dat",
+            dtype=np.float32,
+            mode="w+",
+            shape=(n_pairs,),
         )
         used = 0
         for i in range(n_samples - 1):
-            distances = np.linalg.norm(vecs[i + 1:] - vecs[i], axis=1)
-            other = vals[i + 1:]
+            distances = np.linalg.norm(vecs[i + 1 :] - vecs[i], axis=1)
+            other = vals[i + 1 :]
             greater = np.maximum(vals[i], other)
             lesser = np.minimum(vals[i], other)
             valid = (distances > 0) & (greater > 0)
@@ -295,7 +270,7 @@ def estimate_epsilon(
             eps[valid] = (1 - lesser[valid] / greater[valid]) / distances[valid]
             eps = eps[np.isfinite(eps) & (eps > 0)]
             count = eps.size
-            samples[used:used + count] = eps
+            samples[used : used + count] = eps
             used += count
 
         if not used:

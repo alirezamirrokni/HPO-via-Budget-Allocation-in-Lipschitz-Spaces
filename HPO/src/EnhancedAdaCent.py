@@ -44,17 +44,21 @@ class EnhancedAdaCent:
         positive = values > 0
         scales = max(best_perf, 1e-8) / np.maximum(values, 1e-8)
         modified = base * scales - (scales - 1.0) / max(self.epsilon, 1e-8)
-        adjusted = np.where(positive[None, :], np.minimum(base, modified), base)
+        adjusted = np.where(positive[None, :], modified, base)
         scores = adjusted.min(axis=1)
         return int(remaining_idx[np.argmax(scores)])
 
     def run(self, bench, task_id: str) -> List[Tuple[int, float]]:
         dim = get_suite_dim(bench)
-        vecs = SobolEngine(
-            dim,
-            scramble=True,
-            seed=self.seed,
-        ).draw(self.n).numpy()
+        vecs = (
+            SobolEngine(
+                dim,
+                scramble=True,
+                seed=self.seed,
+            )
+            .draw(self.n)
+            .numpy()
+        )
         diff = vecs[:, None, :] - vecs[None, :, :]
         dist_mat = np.linalg.norm(diff, axis=-1)
 
@@ -142,9 +146,7 @@ class EnhancedAdaCent:
                     best_global = max(best_global, acc)
                     trace.append((total_spent, best_global))
 
-                active_last_acc = [
-                    c["hist"][-1][1] for c in cands if c["active"]
-                ]
+                active_last_acc = [c["hist"][-1][1] for c in cands if c["active"]]
                 if not active_last_acc:
                     break
 
