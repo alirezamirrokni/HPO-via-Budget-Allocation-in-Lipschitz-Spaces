@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Experiment outputs
+outputs/
+results/
+comparison_results/
+custom_plots_*/
+smac_hpo_tmp_*/
+MFBO/res/
+MFBO/outputs/
+MFBO/.hydra/
+multirun/
+*.npy
+*.npz
+*.pkl
+*.pickle
+*.log
+
+# System and editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
