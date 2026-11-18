@@ -4,7 +4,7 @@ Implementation of **AdaCent**, **Enhanced-AdaCent**, and their baselines for the
 
 Hyperparameter optimization often involves many configurations whose performance is only revealed progressively as more training resources are allocated. We study **Unknown Value Probing (UVP)**: how should a finite evaluation budget be distributed over configurations when nearby configurations have related learning curves? Our methods use geometric coverage to explore the space, then adapt allocation based on observed values, using early stopping to redirect budget away from unpromising configurations.
 
-<p align="center"><img src="assets/overview.jpg" width="95%" alt="Euclidean versus value-aware greedy k-center selection"></p>
+<p align="center"><img src="assets/overview.svg" width="95%" alt="Euclidean versus value-aware greedy k-center selection"></p>
 <p align="center"><em>Euclidean versus enhanced-distance greedy k-center selection: value-aware coverage discourages further evaluations in low-value regions.</em></p>
 
 ## Setup
@@ -61,15 +61,15 @@ We evaluate on **LCBench**, **rbv2_rpart**, and **rbv2_aknn**, covering over 250
 
 **Mean rank across the budget.** Lower is better. The methods' relative rankings change over the evaluation horizon, especially on the RPart and AKNN scenarios.
 
-<p align="center"><img src="assets/mean_ranks.jpg" width="100%" alt="Mean rank for LCBench, RPart, AKNN"></p>
+<p align="center"><img src="assets/mean_ranks.svg" width="100%" alt="Mean rank for LCBench, RPart, AKNN"></p>
 
 **LCBench learning curves.** Six representative tasks from the paper:
 
-<p align="center"><img src="assets/lcbench_accuracy.jpg" width="100%" alt="Six LCBench accuracy plots"></p>
+<p align="center"><img src="assets/lcbench_accuracy.svg" width="100%" alt="Six LCBench accuracy plots"></p>
 
 **RPart and AKNN learning curves.** Three representative datasets in each scenario:
 
-<p align="center"><img src="assets/rbv2_accuracy.jpg" width="100%" alt="RPart and AKNN accuracy plots"></p>
+<p align="center"><img src="assets/rbv2_accuracy.svg" width="100%" alt="RPart and AKNN accuracy plots"></p>
 
 For exact protocols, confidence information, additional per-task figures, the synthetic functions, and the MFBO comparison, see the [paper](https://arxiv.org/pdf/2510.10605). Historical generated per-task comparison plots were intentionally removed from the working tree to keep the code repository focused; they remain in Git history.
 
