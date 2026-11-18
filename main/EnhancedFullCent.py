@@ -14,60 +14,44 @@ def k_center_with_history_values(
     prev_centers: np.ndarray = None,
     prev_vals: np.ndarray = None,
 ) -> List[int]:
-    n_points = vecs.shape[0]
+    n_points = len(vecs)
+    if n_points == 0 or k <= 0:
+        return []
 
     available = np.ones(n_points, dtype=bool)
-
-    if prev_centers is not None and prev_centers.size > 0:
-        thr = 1e-14
-        diff2 = np.sum(
-            (vecs[:, None, :] - prev_centers[None, :, :]) ** 2,
-            axis=2,
+    nearest = np.full(n_points, np.inf)
+    if prev_centers is not None and prev_centers.size:
+        distances = np.linalg.norm(
+            vecs[:, None, :] - prev_centers[None, :, :], axis=2
         )
-        available[np.any(diff2 < thr, axis=1)] = False
+        available[np.any(distances < 1e-7, axis=1)] = False
+        values = np.asarray(prev_vals, dtype=float)
+        if values.size != prev_centers.shape[0]:
+            raise ValueError("Each previously selected center needs a value")
+        modified = distances.copy()
+        positive = values > 0
+        if positive.any() and epsilon > 0:
+            scales = max(values[positive].max(), 1e-8) / values[positive]
+            warped = (
+                distances[:, positive] * scales[None, :]
+                - (scales[None, :] - 1.0) / epsilon
+            )
+            modified[:, positive] = np.minimum(distances[:, positive], warped)
+        nearest = modified.min(axis=1)
 
-        v_max = float(np.max(prev_vals))
-        scales = v_max / prev_vals
-
-        base_d = np.linalg.norm(
-            vecs[:, None, :] - prev_centers[None, :, :],
-            axis=2,
+    centers = []
+    while len(centers) < k and available.any():
+        remaining = np.flatnonzero(available)
+        idx = (
+            int(rng.choice(remaining))
+            if not centers and not np.isfinite(nearest).any()
+            else int(remaining[np.argmax(nearest[remaining])])
         )
-
-        mod_d = (
-            scales[None, :] * base_d
-            - (scales[None, :] - 1.0) / epsilon
+        centers.append(idx)
+        available[idx] = False
+        nearest = np.minimum(
+            nearest, np.linalg.norm(vecs - vecs[idx], axis=1)
         )
-
-        cur_min = np.min(mod_d, axis=1)
-    else:
-        cur_min = np.full(n_points, np.inf)
-
-    centers: List[int] = []
-
-    feasible = np.flatnonzero(available)
-    if feasible.size == 0:
-        return centers
-
-    first = int(rng.choice(feasible))
-    centers.append(first)
-    available[first] = False
-
-    new_d = np.linalg.norm(vecs - vecs[first], axis=1)
-    cur_min = np.minimum(cur_min, new_d)
-
-    while len(centers) < k:
-        feasible = np.flatnonzero(available)
-        if feasible.size == 0:
-            break
-
-        best_idx = feasible[np.argmax(cur_min[feasible])]
-        centers.append(int(best_idx))
-        available[best_idx] = False
-
-        new_d = np.linalg.norm(vecs - vecs[best_idx], axis=1)
-        cur_min = np.minimum(cur_min, new_d)
-
     return centers
 
 
@@ -117,6 +101,9 @@ class EnhancedFullCent:
                 prev_centers,
                 prev_vals,
             )
+
+            if not idxs:
+                break
 
             new_centers = vecs[idxs]
 
