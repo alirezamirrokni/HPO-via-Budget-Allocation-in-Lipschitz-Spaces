@@ -1,0 +1,10 @@
+numpy
+scipy
+matplotlib
+seaborn
+torch
+yahpo-gym
+ConfigSpace
+hpbandster
+smac==1.4.0
+pytest
