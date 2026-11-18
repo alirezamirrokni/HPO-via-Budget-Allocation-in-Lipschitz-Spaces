@@ -12,52 +12,32 @@ def k_center_with_history(
     rng: np.random.Generator,
     prev_centers: np.ndarray = None,
 ) -> List[int]:
-    n_points = vecs.shape[0]
+    n_points = len(vecs)
+    if n_points == 0 or k <= 0:
+        return []
 
-    if prev_centers is None or prev_centers.size == 0:
-        init_idx = rng.integers(n_points)
-        centers = [init_idx]
+    available = np.ones(n_points, dtype=bool)
+    nearest = np.full(n_points, np.inf)
+    if prev_centers is not None and prev_centers.size:
+        distances = np.linalg.norm(
+            vecs[:, None, :] - prev_centers[None, :, :], axis=2
+        )
+        available[np.any(distances < 1e-7, axis=1)] = False
+        nearest = distances.min(axis=1)
 
-        while len(centers) < k:
-            selected = vecs[centers]
-            dists = np.min(
-                np.linalg.norm(
-                    vecs[:, None, :] - selected[None, :, :],
-                    axis=2,
-                ),
-                axis=1,
-            )
-            next_idx = int(np.argmax(dists))
-            centers.append(next_idx)
-
-        return centers
-
-    dists_prev = np.min(
-        np.linalg.norm(
-            vecs[:, None, :] - prev_centers[None, :, :],
-            axis=2,
-        ),
-        axis=1,
-    )
-
-    centers: List[int] = []
-
-    for _ in range(k):
-        if centers:
-            selected = vecs[centers]
-            dists_new = np.min(
-                np.linalg.norm(
-                    vecs[:, None, :] - selected[None, :, :],
-                    axis=2,
-                ),
-                axis=1,
-            )
-            dists = np.minimum(dists_prev, dists_new)
-        else:
-            dists = dists_prev
-
-        next_idx = int(np.argmax(dists))
-        centers.append(next_idx)
+    centers = []
+    while len(centers) < k and available.any():
+        remaining = np.flatnonzero(available)
+        idx = (
+            int(rng.choice(remaining))
+            if not centers and not np.isfinite(nearest).any()
+            else int(remaining[np.argmax(nearest[remaining])])
+        )
+        centers.append(idx)
+        available[idx] = False
+        nearest = np.minimum(
+            nearest, np.linalg.norm(vecs - vecs[idx], axis=1)
+        )
 
     return centers
 
@@ -128,6 +108,9 @@ class AdaCent:
                 self.rng,
                 prev_centers,
             )
+
+            if not idxs:
+                break
 
             new_centers = vecs[idxs]
             prev_centers = np.vstack([prev_centers, new_centers])
